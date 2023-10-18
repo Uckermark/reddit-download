@@ -5,20 +5,22 @@ import download
 import image
 import env
 import list
+import re
+import sys
 
 
 def subreddit(download_directory, subreddit, limit):
     reddit = praw.Reddit(client_id=env.client_id, client_secret=env.client_secret, user_agent=env.user_agent)
 
     subreddit = reddit.subreddit(subreddit)
-
+    sub_id = re.sub(r'[^a-zA-Z0-9\s]', '', subreddit.title)
     if not os.path.exists(download_directory):
         os.makedirs(download_directory)
     os.chdir(download_directory)
-    if not os.path.exists(subreddit.title):
-        os.makedirs(subreddit.title)
+    if not os.path.exists(sub_id):
+        os.makedirs(sub_id)
 
-    url_file = f"{subreddit.title}\downloaded.json"
+    url_file = f"{sub_id}\_downloaded.json"
     urls = list.get_url_list(url_file)
     
     hot = subreddit.hot(limit=limit)
@@ -37,9 +39,9 @@ def subreddit(download_directory, subreddit, limit):
             print(f"✓ ", end = "", flush = True)
             if os.path.exists(tmpfile):
                 png = image.convert_to_png(tmpfile)
-                with open(f"{subreddit.title}/{new_name}.png", 'wb') as f:
+                with open(f"{sub_id}/{new_name}.png", 'wb') as f:
                     f.write(png.read())
-                    print(f"\t-> {subreddit.title}/{new_name}.png", flush = True)
+                    print(f"\t-> {sub_id}/{new_name}.png", flush = True)
                     urls.append(post.url)
             else:
                 print("Download failed!")
@@ -47,9 +49,9 @@ def subreddit(download_directory, subreddit, limit):
             print("Not an image, skipping...", flush = True)
     list.write_url_list(url_file, urls)
 
-_subreddit = 'penis'
-_download_directory = 'downloaded_images'
-_limit = 5
 
 if __name__ == '__main__':
+    _download_directory = 'downloaded_images'
+    _limit = 50
+    _subreddit = sys.argv[1]
     subreddit(_download_directory, _subreddit, _limit)
